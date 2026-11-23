@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>دليل الإرشاد الأكاديمي</title>
+<style>
+:root {color-scheme:light;--ink:#142a27;--muted:#4d655d;--green:#116456;--line:#d9e5dd;--paper:#f6f8f3}
+* {box-sizing:border-box}
+body {margin:0;background:var(--paper);color:var(--ink);font-family:Tahoma,Arial,sans-serif;line-height:1.65}
+header {background:#123a34;color:white;padding:17px max(20px,calc((100vw - 840px)/2));display:flex;align-items:center;gap:12px;white-space:nowrap}
+header svg {width:34px;height:34px;padding:7px;background:#28564d;border-radius:9px}
+main {width:min(840px,calc(100% - 32px));margin:clamp(30px,7vw,76px) auto}
+.kicker {color:var(--green);font-weight:bold;font-size:.95rem}
+h1 {font-size:clamp(2rem,6vw,3.7rem);line-height:1.25;margin:9px 0 12px}
+h2 {margin:0 0 10px;font-size:1.2rem}
+p {margin:0;color:var(--muted)}
+form,.card {background:white;border:1px solid var(--line);border-radius:18px;padding:clamp(17px,3vw,27px)}
+form {margin-top:25px;box-shadow:0 10px 35px #173d3010}
+label {display:block;font-weight:bold;margin-bottom:7px}
+.actions {display:flex;gap:10px;flex-wrap:wrap}
+input,button {font:inherit;padding:10px 14px;border-radius:10px;min-height:48px}
+input {background:#f9fbf8;color:var(--ink);border:1px solid #aabfb5;min-width:0;flex:1 1 185px;text-align:right}
+button {border:0;background:var(--green);color:white;font-weight:bold;cursor:pointer}
+button:disabled {opacity:.65;cursor:wait}
+:focus-visible {outline:3px solid #902e12;outline-offset:3px}
+#message {margin-top:12px;color:#991f1f}
+#message:empty {display:none}
+#result {margin-top:24px}
+.identity {background:#e7f1e9;margin-bottom:12px}
+.grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.mentor {grid-column:1/-1;border-inline-start:5px solid var(--green)}
+.value {color:var(--ink);font-size:1.13rem;font-weight:bold}
+ul {list-style:none;padding:0;margin:0}
+li {padding:9px 0;border-top:1px solid var(--line)}
+@media(max-width:500px){.grid{grid-template-columns:1fr}button{width:100%}}
+</style>
+</head>
+<body>
+<header><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18"/></svg><strong>الإرشاد الأكاديمي</strong></header>
+<main>
+<p class="kicker">العام الجامعي 2026–2027</p>
+<h1>دليل الإرشاد الأكاديمي</h1>
+<p>اعرف مرشدك، ومسؤوليك في قسمي الجراحة والباطنة، وزملاءك مع نفس المرشد.</p>
+<form id="lookup">
+<label for="student-id">رقم الجلوس</label>
+<div class="actions"><input id="student-id" dir="ltr" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="أدخل رقم الجلوس المكوّن من 8 أرقام" required><button>عرض مجموعتي</button></div>
+<p id="message" role="status"></p>
+</form>
+<section id="result" aria-labelledby="student-name" hidden>
+<div class="card identity"><p id="department"></p><h2 id="student-name" tabindex="-1"></h2><p id="seat"></p></div>
+<div class="grid">
+<section class="card mentor"><h2>المرشد الأكاديمي</h2><p class="value" id="mentor"></p><p id="detail"></p><p id="mentor_phone" dir="ltr"></p></section>
+<section class="card"><h2>مسؤول الجراحة</h2><p class="value" id="surgery"></p><p id="surgery_phone" dir="ltr"></p></section>
+<section class="card"><h2>مسؤول الباطنة</h2><p class="value" id="medicine"></p><p id="medicine_phone" dir="ltr"></p></section>
+</div>
+<section class="card"><h2 id="peers-heading"></h2><ul id="peers"></ul><p id="empty-peers" hidden>لا توجد أسماء زملاء مع نفس المرشد في الكشوف المتاحة لهذه الفرقة.</p></section>
+</section>
+</main>
+<script src="./config.js"></script>
+<script>
+const api = window.MENTORSHIP_API;
+if (api) fetch(api + '/activity', {method: 'POST', keepalive: true}).catch(() => {});
+const get = (id) => document.getElementById(id);
+const form = get('lookup');
+const input = get('student-id');
+const result = get('result');
+const button = form.querySelector('button');
+input.addEventListener('input', () => {
+  result.hidden = true;
+  get('message').textContent = '';
+});
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  result.hidden = true;
+  get('message').textContent = '';
+  button.disabled = true;
+  input.readOnly = true;
+  try {
+    if (!api) throw new Error('Lookup service has not been configured');
+    const response = await fetch(api + '/lookup', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({id: input.value})
+    });
+    const data = await response.json();
+    if (response.status === 429) {
+      get('message').textContent = 'تم إرسال طلبات كثيرة. انتظر دقيقة وحاول مرة أخرى.';
+      return;
+    }
+    if (!response.ok) {
+      get('message').textContent = data.error === 'invalid_id'
+        ? 'أدخل رقم جلوس صحيحًا مكوّنًا من 8 أرقام.'
+        : 'لم نجد رقم الجلوس في الكشوف المتاحة. تأكد من الرقم وحاول مرة أخرى.';
+      input.focus();
+      return;
+    }
+    get('student-name').textContent = data.name;
+    get('department').textContent = 'الفرقة ' + data.year + (data.department ? ' · ' + data.department : '');
+    get('seat').textContent = 'رقم الجلوس: ' + data.seat;
+    for (const field of ['mentor', 'detail', 'surgery', 'medicine']) {
+      get(field).textContent = data[field] || 'غير مدرج';
+    }
+    for (const field of ['mentor_phone', 'surgery_phone', 'medicine_phone']) get(field).textContent = data[field] || '';
+    get('peers-heading').textContent = 'زملاء مع نفس المرشد (' + data.peers.length + ')';
+    get('peers').replaceChildren(...data.peers.map(({name, seat}) => {
+      const item = document.createElement('li');
+      item.textContent = name + ' · ' + seat;
+      item.dir = 'auto';
+      return item;
+    }));
+    get('empty-peers').hidden = data.peers.length !== 0;
+    result.hidden = false;
+    get('student-name').focus();
+  } catch {
+    get('message').textContent = 'تعذر تحميل النتيجة. حاول مرة أخرى.';
+  } finally {
+    button.disabled = false;
+    input.readOnly = false;
+  }
+});
+</script>
+</body>
+</html>
+
+
+
