@@ -20,7 +20,11 @@ form {margin-top:25px;box-shadow:0 10px 35px #173d3010}
 label {display:block;font-weight:bold;margin-bottom:7px}
 .actions {display:flex;gap:10px;flex-wrap:wrap}
 input,button {font:inherit;padding:10px 14px;border-radius:10px;min-height:48px}
-input {background:#f9fbf8;color:var(--ink);border:1px solid #aabfb5;min-width:0;flex:1 1 185px;text-align:right}
+input {background:#f9fbf8;color:var(--ink);border:1px solid #aabfb5;min-width:0;flex:1 1 185px;text-align:end}
+#language {margin-inline-start:auto;min-height:36px;width:auto;background:#28564d;border:1px solid #70958d}
+.source-text {text-align:start}
+[dir=rtl] input {text-align:right}
+[dir=ltr] input {text-align:left}
 button {border:0;background:var(--green);color:white;font-weight:bold;cursor:pointer}
 button:disabled {opacity:.65;cursor:wait}
 :focus-visible {outline:3px solid #902e12;outline-offset:3px}
@@ -37,24 +41,24 @@ li {padding:9px 0;border-top:1px solid var(--line)}
 </style>
 </head>
 <body>
-<header><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18"/></svg><strong>الإرشاد الأكاديمي</strong></header>
+<header><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18"/></svg><strong data-copy="brand">الإرشاد الأكاديمي</strong><button type="button" id="language" lang="en">English</button></header>
 <main>
-<p class="kicker">العام الجامعي 2026–2027</p>
-<h1>دليل الإرشاد الأكاديمي</h1>
-<p>اعرف مرشدك، ومسؤوليك في قسمي الجراحة والباطنة، وزملاءك مع نفس المرشد.</p>
+<p class="kicker" data-copy="year">العام الجامعي 2026–2027</p>
+<h1 data-copy="title">دليل الإرشاد الأكاديمي</h1>
+<p data-copy="intro">اعرف مرشدك، ومسؤوليك في قسمي الجراحة والباطنة، وزملاءك مع نفس المرشد.</p>
 <form id="lookup">
-<label for="student-id">رقم الجلوس</label>
-<div class="actions"><input id="student-id" dir="ltr" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="أدخل رقم الجلوس المكوّن من 8 أرقام" required><button>عرض مجموعتي</button></div>
+<label for="student-id" data-copy="seatLabel">رقم الجلوس</label>
+<div class="actions"><input id="student-id" dir="ltr" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="أدخل رقم الجلوس المكوّن من 8 أرقام" required><button data-copy="submit">عرض مجموعتي</button></div>
 <p id="message" role="status"></p>
 </form>
 <section id="result" aria-labelledby="student-name" hidden>
-<div class="card identity"><p id="department"></p><h2 id="student-name" tabindex="-1"></h2><p id="seat"></p></div>
+<div class="card identity"><p id="department" dir="auto" class="source-text"></p><h2 id="student-name" dir="auto" class="source-text" tabindex="-1"></h2><p id="seat"></p></div>
 <div class="grid">
-<section class="card mentor"><h2>المرشد الأكاديمي</h2><p class="value" id="mentor"></p><p id="detail"></p><p id="mentor_phone" dir="ltr"></p></section>
-<section class="card"><h2>مسؤول الجراحة</h2><p class="value" id="surgery"></p><p id="surgery_phone" dir="ltr"></p></section>
-<section class="card"><h2>مسؤول الباطنة</h2><p class="value" id="medicine"></p><p id="medicine_phone" dir="ltr"></p></section>
+<section class="card mentor"><h2 data-copy="mentor">المرشد الأكاديمي</h2><p class="value" id="mentor" dir="auto"></p><p id="detail" dir="auto" class="source-text"></p><p id="mentor_phone" dir="ltr"></p></section>
+<section class="card"><h2 data-copy="surgery">مسؤول الجراحة</h2><p class="value" id="surgery" dir="auto"></p><p id="surgery_detail" dir="auto" class="source-text"></p><p id="surgery_phone" dir="ltr"></p></section>
+<section class="card"><h2 data-copy="medicine">مسؤول الباطنة</h2><p class="value" id="medicine" dir="auto"></p><p id="medicine_detail" dir="auto" class="source-text"></p><p id="medicine_phone" dir="ltr"></p></section>
 </div>
-<section class="card"><h2 id="peers-heading"></h2><ul id="peers"></ul><p id="empty-peers" hidden>لا توجد أسماء زملاء مع نفس المرشد في الكشوف المتاحة لهذه الفرقة.</p></section>
+<section class="card"><h2 id="peers-heading"></h2><ul id="peers"></ul><p id="empty-peers" hidden data-copy="empty">لا توجد أسماء زملاء مع نفس المرشد في الكشوف المتاحة لهذه الفرقة.</p></section>
 </section>
 </main>
 <script src="./config.js"></script>
@@ -66,14 +70,116 @@ const form = get('lookup');
 const input = get('student-id');
 const result = get('result');
 const button = form.querySelector('button');
+const copy = {
+  ar: {
+    brand:'الإرشاد الأكاديمي', title:'دليل الإرشاد الأكاديمي', year:'العام الجامعي 2026–2027',
+    intro:'اعرف مرشدك، ومسؤوليك في قسمي الجراحة والباطنة، وزملاءك مع نفس المرشد.',
+    seatLabel:'رقم الجلوس', placeholder:'أدخل رقم الجلوس المكوّن من 8 أرقام', submit:'عرض مجموعتي',
+    mentor:'المرشد الأكاديمي', surgery:'مسؤول الجراحة', medicine:'مسؤول الباطنة',
+    yearLabel:'الفرقة', missing:'غير مدرج', peers:'زملاء مع نفس المرشد',
+    empty:'لا توجد أسماء زملاء مع نفس المرشد في الكشوف المتاحة لهذه الفرقة.',
+    invalid_id:'أدخل رقم جلوس صحيحًا مكوّنًا من 8 أرقام.',
+    unknown_id:'لم نجد رقم الجلوس في الكشوف المتاحة. تأكد من الرقم وحاول مرة أخرى.',
+    too_many_requests:'تم إرسال طلبات كثيرة. انتظر دقيقة وحاول مرة أخرى.',
+    unavailable:'تعذر تحميل النتيجة. حاول مرة أخرى.'
+  },
+  en: {
+    brand:'Academic Mentorship', title:'Mentorship Finder', year:'Academic year 2026–2027',
+    intro:'Find your academic mentor, Surgery and Internal Medicine contacts, and students assigned to the same mentor.',
+    seatLabel:'Seat number', placeholder:'Enter your 8-digit seat number', submit:'Find my group',
+    mentor:'Academic mentor', surgery:'Surgery contact', medicine:'Internal Medicine contact',
+    yearLabel:'Year', missing:'Not listed', peers:'Students with the same mentor',
+    empty:'The available records list no other students in this year with the same mentor.',
+    invalid_id:'Enter a valid 8-digit seat number.',
+    unknown_id:'That seat number was not found. Check the number and try again.',
+    too_many_requests:'Too many requests. Wait one minute and try again.',
+    unavailable:'Could not load the result. Please try again.'
+  }
+};
+let lang = 'ar';
+try { if (localStorage.getItem('mentorship-language') === 'en') lang = 'en'; } catch {}
+let current = null;
+let message = '';
+let staff = {};
+fetch('./staff-details.json')
+  .then(response => { if (response.ok) return response.json(); })
+  .then(data => { if (data) staff = data; if (current) renderResult(); })
+  .catch(() => {});
+
+function renderResult() {
+  const data = current;
+  const t = copy[lang];
+  get('student-name').textContent = data.name;
+  const department = get('department');
+  department.replaceChildren(t.yearLabel + ' ');
+  for (const [index, value] of [data.year, data.department].filter(Boolean).entries()) {
+    if (index) department.append(' · ');
+    const source = document.createElement('bdi');
+    source.textContent = value;
+    department.append(source);
+  }
+  const seat = document.createElement('bdi');
+  seat.dir = 'ltr';
+  seat.textContent = data.seat;
+  get('seat').replaceChildren(t.seatLabel + ' ', seat);
+  for (const field of ['mentor', 'surgery', 'medicine']) {
+    get(field).textContent = data[field] || t.missing;
+    get(field + '_phone').textContent = data[field + '_phone'] || '';
+  }
+  get('detail').textContent = data.detail || '';
+  for (const field of ['surgery', 'medicine']) {
+    get(field + '_detail').textContent = staff[field]?.[data[field]] || '';
+  }
+  get('peers-heading').textContent = t.peers + ' (' + data.peers.length + ')';
+  get('peers').replaceChildren(...data.peers.map(({name, seat}) => {
+    const item = document.createElement('li');
+    const source = document.createElement('bdi');
+    const number = document.createElement('bdi');
+    source.textContent = name;
+    number.dir = 'ltr';
+    number.textContent = seat;
+    item.append(source, ' · ', number);
+    return item;
+  }));
+  get('empty-peers').hidden = data.peers.length !== 0;
+}
+
+function renderLanguage() {
+  const t = copy[lang];
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.title = t.title;
+  for (const element of document.querySelectorAll('[data-copy]')) {
+    element.textContent = t[element.dataset.copy];
+  }
+  input.placeholder = t.placeholder;
+  const toggle = get('language');
+  toggle.lang = lang === 'ar' ? 'en' : 'ar';
+  toggle.textContent = lang === 'ar' ? 'English' : 'العربية';
+  get('message').textContent = message ? t[message] : '';
+  if (current) renderResult();
+}
+function showMessage(key) {
+  message = key;
+  get('message').textContent = key ? copy[lang][key] : '';
+}
+get('language').addEventListener('click', () => {
+  lang = lang === 'ar' ? 'en' : 'ar';
+  try { localStorage.setItem('mentorship-language', lang); } catch {}
+  renderLanguage();
+});
+renderLanguage();
+
 input.addEventListener('input', () => {
   result.hidden = true;
-  get('message').textContent = '';
+  current = null;
+  showMessage('');
 });
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   result.hidden = true;
-  get('message').textContent = '';
+  current = null;
+  showMessage('');
   button.disabled = true;
   input.readOnly = true;
   try {
@@ -84,36 +190,18 @@ form.addEventListener('submit', async (event) => {
       body: JSON.stringify({id: input.value})
     });
     const data = await response.json();
-    if (response.status === 429) {
-      get('message').textContent = 'تم إرسال طلبات كثيرة. انتظر دقيقة وحاول مرة أخرى.';
-      return;
-    }
     if (!response.ok) {
-      get('message').textContent = data.error === 'invalid_id'
-        ? 'أدخل رقم جلوس صحيحًا مكوّنًا من 8 أرقام.'
-        : 'لم نجد رقم الجلوس في الكشوف المتاحة. تأكد من الرقم وحاول مرة أخرى.';
+      const key = data.error;
+      showMessage(['invalid_id', 'unknown_id', 'too_many_requests'].includes(key) ? key : 'unavailable');
       input.focus();
       return;
     }
-    get('student-name').textContent = data.name;
-    get('department').textContent = 'الفرقة ' + data.year + (data.department ? ' · ' + data.department : '');
-    get('seat').textContent = 'رقم الجلوس: ' + data.seat;
-    for (const field of ['mentor', 'detail', 'surgery', 'medicine']) {
-      get(field).textContent = data[field] || 'غير مدرج';
-    }
-    for (const field of ['mentor_phone', 'surgery_phone', 'medicine_phone']) get(field).textContent = data[field] || '';
-    get('peers-heading').textContent = 'زملاء مع نفس المرشد (' + data.peers.length + ')';
-    get('peers').replaceChildren(...data.peers.map(({name, seat}) => {
-      const item = document.createElement('li');
-      item.textContent = name + ' · ' + seat;
-      item.dir = 'auto';
-      return item;
-    }));
-    get('empty-peers').hidden = data.peers.length !== 0;
+    current = data;
+    renderResult();
     result.hidden = false;
     get('student-name').focus();
   } catch {
-    get('message').textContent = 'تعذر تحميل النتيجة. حاول مرة أخرى.';
+    showMessage('unavailable');
   } finally {
     button.disabled = false;
     input.readOnly = false;
