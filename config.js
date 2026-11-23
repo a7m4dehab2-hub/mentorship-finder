@@ -1,0 +1,1 @@
+window.MENTORSHIP_API = '';
