@@ -34,6 +34,9 @@ button:disabled {opacity:.65;cursor:wait}
 .identity {background:#e7f1e9;margin-bottom:12px}
 .grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px}
 .mentor {grid-column:1/-1;border-inline-start:5px solid var(--green)}
+.coordinator {margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.coordinator strong {display:block}
+.coordinator a {color:var(--green);display:inline-block;margin-inline-start:10px}
 .value {color:var(--ink);font-size:1.13rem;font-weight:bold}
 ul {list-style:none;padding:0;margin:0}
 li {padding:9px 0;border-top:1px solid var(--line)}
@@ -54,7 +57,7 @@ li {padding:9px 0;border-top:1px solid var(--line)}
 <section id="result" aria-labelledby="student-name" hidden>
 <div class="card identity"><p id="department" dir="auto" class="source-text"></p><h2 id="student-name" dir="auto" class="source-text" tabindex="-1"></h2><p id="seat"></p></div>
 <div class="grid">
-<section class="card mentor"><h2 data-copy="mentor">المرشد الأكاديمي</h2><p class="value" id="mentor" dir="auto"></p><p id="detail" dir="auto" class="source-text"></p><p id="mentor_phone" dir="ltr"></p></section>
+<section class="card mentor"><h2 data-copy="mentor">المرشد الأكاديمي</h2><p class="value" id="mentor" dir="auto"></p><p id="detail" dir="auto" class="source-text"></p><p id="mentor_phone" dir="ltr"></p><div id="coordinator" class="coordinator" hidden><strong data-copy="coordinator">منسق الوحدة</strong><span id="coordinator-name" dir="auto"></span><a id="coordinator-phone" dir="ltr"></a></div></section>
 <section class="card"><h2 data-copy="surgery">مسؤول الجراحة</h2><p class="value" id="surgery" dir="auto"></p><p id="surgery_detail" dir="auto" class="source-text"></p><p id="surgery_phone" dir="ltr"></p></section>
 <section class="card"><h2 data-copy="medicine">مسؤول الباطنة</h2><p class="value" id="medicine" dir="auto"></p><p id="medicine_detail" dir="auto" class="source-text"></p><p id="medicine_phone" dir="ltr"></p></section>
 </div>
@@ -70,12 +73,50 @@ const form = get('lookup');
 const input = get('student-id');
 const result = get('result');
 const button = form.querySelector('button');
+const unitCoordinators = new Map(Object.entries({
+  "وحدة أ.د. منى حجازي": [
+    "Dr Marwa El Shahat",
+    "01093538742"
+  ],
+  "وحدة أ.د. محمد الباسل": [
+    "Dr Ahmed AbdelGahni",
+    "01501208045"
+  ],
+  "وحدة أ.د. ايمان رشدي": [
+    "Dr Mona Khozam",
+    "01112014548"
+  ],
+  "وحدة أ.د. احمد مراد هاشم": [
+    "Dr Ahmed Lamuna",
+    "01221619910"
+  ],
+  "وحدة أ.د. سحر الوكيل": [
+    "Dr Sheimaa Meligy",
+    "01015600682"
+  ],
+  "وحدة أ.د. سهام بكري": [
+    "Dr. Shady",
+    "01111580554"
+  ],
+  "وحدة أ.د. محمد رشدي المصري": [
+    "Dr. Marwa Salah",
+    "01224325725"
+  ],
+  "وحدة أ.د. سلوى إبراهيم": [
+    "Dr Heba Wagdy",
+    "01095933027"
+  ]
+}));
+function coordinatorFor(data) {
+  if (data.department !== 'الباطنة' || !data.mentor || !data.detail) return undefined;
+  return unitCoordinators.get(data.detail.split('—').map(part => part.trim()).find(part => part.startsWith('وحدة ')));
+}
 const copy = {
   ar: {
     brand:'الإرشاد الأكاديمي', title:'دليل الإرشاد الأكاديمي', year:'العام الجامعي 2026–2027',
     intro:'اعرف مرشدك، ومسؤوليك في قسمي الجراحة والباطنة، وزملاءك مع نفس المرشد.',
     seatLabel:'رقم الجلوس', placeholder:'أدخل رقم الجلوس المكوّن من 8 أرقام', submit:'عرض مجموعتي',
-    mentor:'المرشد الأكاديمي', surgery:'مسؤول الجراحة', medicine:'مسؤول الباطنة',
+    coordinator:'منسق الوحدة', mentor:'المرشد الأكاديمي', surgery:'مسؤول الجراحة', medicine:'مسؤول الباطنة',
     yearLabel:'الفرقة', missing:'غير مدرج', peers:'زملاء مع نفس المرشد',
     empty:'لا توجد أسماء زملاء مع نفس المرشد في الكشوف المتاحة لهذه الفرقة.',
     invalid_id:'أدخل رقم جلوس صحيحًا مكوّنًا من 8 أرقام.',
@@ -87,7 +128,7 @@ const copy = {
     brand:'Academic Mentorship', title:'Mentorship Finder', year:'Academic year 2026–2027',
     intro:'Find your academic mentor, Surgery and Internal Medicine contacts, and students assigned to the same mentor.',
     seatLabel:'Seat number', placeholder:'Enter your 8-digit seat number', submit:'Find my group',
-    mentor:'Academic mentor', surgery:'Surgery contact', medicine:'Internal Medicine contact',
+    coordinator:'Unit coordinator', mentor:'Academic mentor', surgery:'Surgery contact', medicine:'Internal Medicine contact',
     yearLabel:'Year', missing:'Not listed', peers:'Students with the same mentor',
     empty:'The available records list no other students in this year with the same mentor.',
     invalid_id:'Enter a valid 8-digit seat number.',
@@ -127,6 +168,14 @@ function renderResult() {
     get(field + '_phone').textContent = data[field + '_phone'] || '';
   }
   get('detail').textContent = data.detail || '';
+  const coordinator = coordinatorFor(data);
+  get('coordinator').hidden = !coordinator;
+  if (coordinator) {
+    const [name, phone] = coordinator;
+    get('coordinator-name').textContent = name;
+    get('coordinator-phone').textContent = phone;
+    get('coordinator-phone').href = 'tel:+20' + phone.slice(1);
+  }
   for (const field of ['surgery', 'medicine']) {
     get(field + '_detail').textContent = staff[field]?.[data[field]] || '';
   }
